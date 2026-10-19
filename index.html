@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whoo's The Imposter</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        p {
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--accent-primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.secondary {
+            background: #334155;
+            margin-top: 10px;
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        .timer-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: var(--accent-secondary);
+            margin: 20px 0;
+        }
+
+        .prompt-box {
+            background: #0f172a;
+            border-left: 4px solid var(--accent-secondary);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .player-list {
+            list-style: none;
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #0f172a;
+            margin-bottom: 6px;
+            border-radius: 6px;
+        }
+
+        .player-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .badge {
+            background: var(--accent-primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .badge.host {
+            background: var(--accent-secondary);
+            color: #000;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .results-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .result-card {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .result-card .name {
+            font-weight: bold;
+            color: var(--accent-primary);
+            margin-bottom: 4px;
+        }
+
+        .result-card .answer {
+            font-style: italic;
+            color: var(--text-main);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="app">
+        <!-- SCREEN 1: HOME -->
+        <div id="screen-home">
+            <h1>Whoo's The Imposter</h1>
+            <p>Blend in as the imposter or uncover the mismatched prompt!</p>
+            <div class="form-group">
+                <label for="playerName">Your Name</label>
+                <input type="text" id="playerName" placeholder="Enter your name..." maxlength="15">
+            </div>
+            <button onclick="createRoom()">Create Room</button>
+            <button class="secondary" onclick="showJoinScreen()">Join Room</button>
+        </div>
+
+        <!-- SCREEN 2: JOIN LOBBY -->
+        <div id="screen-join" class="hidden">
+            <h1>Join Room</h1>
+            <div class="form-group">
+                <label for="roomCodeInput">Room Code</label>
+                <input type="text" id="roomCodeInput" placeholder="Enter 4-letter code..." style="text-transform: uppercase;" maxlength="4">
+            </div>
+            <button onclick="joinRoom()">Connect</button>
+            <button class="secondary" onclick="showScreen('screen-home')">Back</button>
+        </div>
+
+        <!-- SCREEN 3: ROOM LOBBY -->
+        <div id="screen-lobby" class="hidden">
+            <h1>Lobby (<span id="displayRoomCode"></span>)</h1>
+            <p>Waiting for players (3-8 required)...</p>
+            <ul id="lobbyPlayerList" class="player-list"></ul>
+            <div id="hostControls" class="hidden">
+                <button onclick="startGame()">Start Game</button>
+            </div>
+            <p id="waitingText" class="hidden" style="color: var(--accent-secondary);">Waiting for the host to start...</p>
+        </div>
+
+        <!-- SCREEN 4: BRIEFING (SECRET ROLE) -->
+        <div id="screen-briefing" class="hidden">
+            <h2>Your Secret Prompt</h2>
+            <div class="prompt-box" id="secretPromptDisplay">Loading prompt...</div>
+            <p id="roleStatusText"></p>
+            <button onclick="readyUpForWriting()">I'm Ready to Write</button>
+        </div>
+
+        <!-- SCREEN 5: WRITING PHASE -->
+        <div id="screen-writing" class="hidden">
+            <h2>Writing Phase</h2>
+            <div class="timer-display" id="writingTimer">60</div>
+            <div class="prompt-box" id="reminderPrompt"></div>
+            <div class="form-group">
+                <label for="playerAnswerInput">Your Answer</label>
+                <input type="text" id="playerAnswerInput" placeholder="Write a creative answer...">
+            </div>
+            <button onclick="submitAnswer()">Submit Answer</button>
+        </div>
+
+        <!-- SCREEN 6: SHARE & DEBATE -->
+        <div id="screen-share" class="hidden">
+            <h2>Share & Debate</h2>
+            <p>Read your answers out loud and discuss! The host can trigger a final 30-second timer at any moment.</p>
+            <div class="results-grid" id="allAnswersGrid"></div>
+            <div id="hostShareControls" class="hidden">
+                <button class="danger" onclick="triggerDebateTimer()">Trigger 30s Final Timer</button>
+            </div>
+            <div id="debateTimerDisplay" class="timer-display hidden">30</div>
+            <button id="proceedToVotingBtn" class="hidden" onclick="goToVoting()">Proceed to Voting</button>
+        </div>
+
+        <!-- SCREEN 7: VOTING -->
+        <div id="screen-voting" class="hidden">
+            <h2>Who is the Imposter?</h2>
+            <p>Select who you suspect received the mismatched prompt.</p>
+            <div class="form-group">
+                <label for="voteSelect">Suspect</label>
+                <select id="voteSelect"></select>
+            </div>
+            <button onclick="submitVote()">Lock In Vote</button>
+        </div>
+
+        <!-- SCREEN 8: RESULTS -->
+        <div id="screen-results" class="hidden">
+            <h2>Game Results</h2>
+            <div class="prompt-box" id="revealPromptBox"></div>
+            <div id="resultsContent" style="margin-bottom: 20px; text-align: center;"></div>
+            <button onclick="resetToLobby()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Local simulation state for seamless single-device or shared testing
+        let gameState = {
+            roomCode: '',
+            isHost: false,
+            playerName: '',
+            players: [],
+            promptPair: null,
+            myRole: '', // 'innocent' or 'imposter'
+            myPrompt: '',
+            myAnswer: '',
+            allAnswers: {},
+            votes: {},
+            timer: null,
+            timeLeft: 60
+        };
+
+        const samplePrompts = [
+            { innocent: "What is your go-to comfort food?", imposter: "What is your absolute least favorite food?" },
+            { innocent: "What is the best superpower?", imposter: "What is the worst minor inconvenience?" },
+            { innocent: "Name something you find in a kitchen.", imposter: "Name something you find in a garage." }
+        ];
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function createRoom() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) return alert('Please enter your name.');
+            
+            gameState.playerName = name;
+            gameState.isHost = true;
+            gameState.roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+            gameState.players = [{ name: name, isHost: true }];
+
+            document.getElementById('displayRoomCode').innerText = gameState.roomCode;
+            updateLobbyUI();
+            showScreen('screen-lobby');
+        }
+
+        function showJoinScreen() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) return alert('Please enter your name first.');
+            gameState.playerName = name;
+            showScreen('screen-join');
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            if (!code) return alert('Please enter a room code.');
+            
+            gameState.isHost = false;
+            gameState.roomCode = code;
+            gameState.players.push({ name: gameState.playerName, isHost: false });
+            
+            document.getElementById('displayRoomCode').innerText = gameState.roomCode;
+            updateLobbyUI();
+            showScreen('screen-lobby');
+        }
+
+        function updateLobbyUI() {
+            const list = document.getElementById('lobbyPlayerList');
+            list.innerHTML = '';
+            gameState.players.forEach(p => {
+                const li = document.createElement('li');
+                li.className = 'player-item';
+                li.innerHTML = `<span>${p.name}</span> ${p.isHost ? '<span class="badge host">Host</span>' : '<span class="badge">Player</span>'}`;
+                list.appendChild(li);
+            });
+
+            if (gameState.isHost) {
+                document.getElementById('hostControls').classList.remove('hidden');
+                if (gameState.players.length >= 3) {
+                    document.getElementById('hostControls').querySelector('button').removeAttribute('disabled');
+                }
+            } else {
+                document.getElementById('waitingText').classList.remove('hidden');
+            }
+        }
+
+        function startGame() {
+            if (gameState.players.length < 3) return alert('Need at least 3 players to start!');
+            
+            // Assign roles
+            const imposterIndex = Math.floor(Math.random() * gameState.players.length);
+            const chosenPair = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
+
+            gameState.players.forEach((p, idx) => {
+                if (p.name === gameState.playerName) {
+                    if (idx === imposterIndex) {
+                        gameState.myRole = 'imposter';
+                        gameState.myPrompt = chosenPair.imposter;
+                    } else {
+                        gameState.myRole = 'innocent';
+                        gameState.myPrompt = chosenPair.innocent;
+                    }
+                }
+            });
+
+            gameState.promptPair = chosenPair;
+            
+            // Setup Briefing Screen
+            document.getElementById('secretPromptDisplay').innerText = gameState.myPrompt;
+            document.getElementById('roleStatusText').innerText = gameState.myRole === 'imposter' ? 'You are the IMPOSTER! Blend in.' : 'You are INNOCENT.';
+            showScreen('screen-briefing');
+        }
+
+        function readyUpForWriting() {
+            showScreen('screen-writing');
+            document.getElementById('reminderPrompt').innerText = `Prompt: "${gameState.myPrompt}"`;
+            document.getElementById('playerAnswerInput').value = '';
+            
+            gameState.timeLeft = 60;
+            document.getElementById('writingTimer').innerText = gameState.timeLeft;
+            
+            if (gameState.timer) clearInterval(gameState.timer);
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                document.getElementById('writingTimer').innerText = gameState.timeLeft;
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timer);
+                    goToSharePhase();
+                }
+            }, 1000);
+        }
+
+        function submitAnswer() {
+            const answer = document.getElementById('playerAnswerInput').value.trim();
+            if (!answer) return alert('Please enter an answer!');
+            
+            gameState.myAnswer = answer;
+            gameState.allAnswers[gameState.playerName] = answer;
+            
+            // Simulate filling out missing dummy answers for other players so the demo works smoothly standalone
+            gameState.players.forEach(p => {
+                if (!gameState.allAnswers[p.name]) {
+                    gameState.allAnswers[p.name] = p.name === gameState.playerName ? answer : "My creative answer...";
+                }
+            });
+
+            clearInterval(gameState.timer);
+            goToSharePhase();
+        }
+
+        function goToSharePhase() {
+            if (gameState.timer) clearInterval(gameState.timer);
+            showScreen('screen-share');
+
+            const grid = document.getElementById('allAnswersGrid');
+            grid.innerHTML = '';
+            for (const [name, ans] of Object.entries(gameState.allAnswers)) {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                card.innerHTML = `<div class="name">${name}</div><div class="answer">"${ans}"</div>`;
+                grid.appendChild(card);
+            }
+
+            if (gameState.isHost) {
+                document.getElementById('hostShareControls').classList.remove('hidden');
+            }
+        }
+
+        function triggerDebateTimer() {
+            document.getElementById('hostShareControls').classList.add('hidden');
+            const timerDisplay = document.getElementById('debateTimerDisplay');
+            timerDisplay.classList.remove('hidden');
+            
+            let debateTime = 30;
+            timerDisplay.innerText = debateTime;
+
+            if (gameState.timer) clearInterval(gameState.timer);
+            gameState.timer = setInterval(() => {
+                debateTime--;
+                timerDisplay.innerText = debateTime;
+                if (debateTime <= 0) {
+                    clearInterval(gameState.timer);
+                    document.getElementById('proceedToVotingBtn').classList.remove('hidden');
+                }
+            }, 1000);
+
+            // Also allow proceeding manually right away
+            document.getElementById('proceedToVotingBtn').classList.remove('hidden');
+        }
+
+        function goToVoting() {
+            if (gameState.timer) clearInterval(gameState.timer);
+            showScreen('screen-voting');
+
+            const select = document.getElementById('voteSelect');
+            select.innerHTML = '';
+            gameState.players.forEach(p => {
+                if (p.name !== gameState.playerName) {
+                    const opt = document.createElement('option');
+                    opt.value = p.name;
+                    opt.innerText = p.name;
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        function submitVote() {
+            const suspect = document.getElementById('voteSelect').value;
+            gameState.votes[gameState.playerName] = suspect;
+            showResults();
+        }
+
+        function showResults() {
+            showScreen('screen-results');
+            document.getElementById('revealPromptBox').innerHTML = `<strong>Innocent Prompt:</strong> ${gameState.promptPair.innocent}<br><strong>Imposter Prompt:</strong> ${gameState.promptPair.imposter}`;
+            
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContent.innerHTML = `<p>The game has concluded! Review your group's accusations and points based on your core rulebook breakdown.</p>`;
+        }
+
+        function resetToLobby() {
+            gameState.allAnswers = {};
+            gameState.votes = {};
+            showScreen('screen-lobby');
+        }
+    </script>
+</body>
+</html>
